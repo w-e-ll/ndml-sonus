@@ -1,0 +1,5 @@
+cx-Oracle
+ecdsa
+paramiko
+pycryptodome
+pyyaml

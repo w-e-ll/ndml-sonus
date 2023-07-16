@@ -1,0 +1,216 @@
+# Contributors
+
+- Valentin Sheboldaev
+
+# Ndml-Sonus Application Description
+
+It consists of three parts:
+- getter
+- parser
+- loader
+
+GETTER: getdata_sonus_ssh_VM.py
+- two ways to get things (download archive or files)
+- .raw files we get with SshSonusGetter class and .csv files we get with SftpFileGetter class
+- .raw files created in RAW folder, .zip files created in ZIP folder as well
+
+we can get an archive: provide next variables
+- SftpFileGetter class  (download via sftp)
+- path = /opt/sonus/ems/EXPORT_PSX_DB/ (file path)
+- file_name = export_psx_db (file name to download)
+- right config file (ex.: test_getter_uat.conf)
+
+we can connect to db and get files
+- SshSonusGetter class
+- right config file (ex.: sonus-production-VM-psx.conf)
+
+we need to provide in the config file next variables to connect to the server and work with it:
+- read_until = \# (or other symbol for PROD env. this one is for UAT)
+- send_pass = ndml (or other symbol for PROD env. this one is for UAT)
+
+PARSER: psx_archive_parser.py, parser_sonus.py, gsx_parsers.py, psx_parsers.py
+- two different parsers to parse (parser_sonus.py, psx_archive_parser.py)
+- we can parse .csv files from ZIP folder (ndml-sonus/ndml_sonus/zip)
+- we can parse .raw files from RAW folder (ndml-sonus/ndml_sonus/raw)
+- in every way exported files from Parser class or gsx_parsers.py, psx_parsers.py parsers are .csv but one of them does not contain DATE,NODE columns
+
+LOADER
+- works with Oracle Database
+- has oracle-instantclient conda package installed in the environment
+- loads data with sqlldr binary. Download package from here: (https://anaconda.org/kadrlica/oracle-instantclient/files)
+- after installation main folder for Orahome is /ndml-sonus/loader_generic/venv/orahome
+- package installation procedure is explained here https://github.com/w-e-ll/loader-generic
+
+# Project path's
+
+All project paths are described in the ndml_utils_tgw.py in Config class.
+
+The base path is the path provided in the main command (to run the script, getter, parser, loader) in the part where the config file path is (after --config).
+
+Your current project directory path is based on that path. BASE_PATH=<First Part without /etc/ part>.
+
+All other project folders are based on the BASE_PATH.
+
+If you mess something with the passes - look to the ndml_utils_tgw.py to check your structure.
+
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/getdata_sonus_ssh_VM.py --config /ndml-sonus/ndml_sonus/etc/test_getter_uat.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+
+## Installation and configuration
+
+In order to successfully install ndml-sonus application you need to proceed next steps:
+
+To update ndml-sonus python package clone it on your laptop:
+
+    $ git clone https://github.com/w-e-ll/ndml-sonus.git
+    $ cd ndml-sonus (work with it and commit updates to the repository)
+
+To install ndml-sonus application download source code as zip or tar.gz archive to your server:
+
+    # https://github.com/w-e-ll/ndml-sonus.git -> download repository link
+    $ unzip ndml-sonus.zip archive
+    $ cd ndml-sonus
+    # - Chech Project Structure section to understand the application structure
+    # - We only need to copy/move files from next folders: scripts_shell, etc
+    # - We do not use files from the ndml_sonus package folder
+    # - Delete all non needed files (that are for the python package repository)
+
+Make two folders for two python packages:
+
+    $ mkdir ndml_sonus loader_generic
+    $ cd ndml_sonus
+
+Let's start from the ndml_sonus part.
+
+Create conda environment: install right version of python:
+    
+    $ conda install python==3.10.4
+    $ conda create -p ./venv python=3.10.4
+    $ conda activate /ndml-sonus/ndml_sonus/venv
+    $ python -m pip install --upgrade pip
+    $ pip install ndml-sonus
+    $ conda deactivate (we will work with the loader_generic package next)
+
+Let's install loader-generic python package
+
+Create conda environment: install right version of python:
+    
+    $ cd loader_generic
+    $ conda create -p ./venv python=3.10.4
+    $ conda activate /ndml-sonus/loader_generic/venv
+    $ python -m pip install --upgrade pip
+    $ pip install loader-generic
+    # update project folder structure appropriately like in the Project Structure is explained (dell all you don't need)
+
+Now we have such files (unzipped downloaded archive folder), so let's copy or move files where they should be:
+
+    # our two dowloaded unzipped archive folders
+    # /ndml_sonus /etc /scripts_shell .gitignore CHANGELOG.md MANIFEST.in ndml_sonus_VM.sh README.md requirements.txt scripts/ setup.py
+    # /loader_generic /etc /oracle /scripts_shell .gitignore CHANGELOG.md MANIFEST.in README.md requirements.txt setup.py    
+    # copy from these folders to beyond Project Structure folders like it is described
+
+We need to create the same project structure for two downloaded python packages.
+
+    $ mkdir (bin, csv, etc, log, raw, tmp, var, zip)
+
+You need to copy files from what we have (downloaded archive) to what we need (project structure).
+
+To copy sh, config files, /oracle with all files/folders:
+
+    $ cp -r </folder/file> </folder>
+
+We have to make such project folders structure + files that we already have from downloaded archives:
+
+## Project Structure
+
+    # ndml-sonus
+    #   ndml_sonus_VM.sh
+    #   sonus_ndml_sample.tgz
+    #       /ndml_sonus
+    #           /bin
+    #               getdata_production_VM_marais.sh
+    #               getdata_production_VM_paille.sh
+    #               getdata_production_VM_psx.sh
+    #               parsedata_production_VM_marais.sh
+    #               parsedata_production_VM_paille.sh
+    #               parsedata_production_VM_psx.sh
+    #               getdata_sonus_ssh_VM.py -> ../venv/bin/getdata_sonus_ssh_VM.py
+    #               parser_sonus.py -> ../venv/bin/parser_sonus.py
+    #               psx_archive_parser.py -> ../venv/bin/psx_archive_parser.py
+    #           /csv
+    #           /etc
+    #               sonus-lab-psx_only_test.conf
+    #               sonus-lab_test.conf
+    #               sonus-production-VM-marais.conf
+    #               sonus-production-VM-paille.conf
+    #               sonus-production-VM-psx.conf
+    #               test_getter_prod.conf
+    #               test_getter_uat.conf
+    #               test_parser_prod.conf
+    #               test_parser_uat.conf
+    #           /log
+    #           /raw
+    #           /tmp
+    #           /var
+    #           /venv
+    #           /zip
+    #       /loader_generic
+    #           /bin
+    #               copy_and_load_prod.sh
+    #               loader.py -> ../venv/bin/loader.py
+    #               load_production.sh
+    #               load_uat.sh
+    #           /data
+    #           /etc
+    #               loader_generic.bbbo01u.conf
+    #           /log
+    #               /sqlldr
+    #           /var
+    #           /venv
+    #           /oracle
+    #               ldap.ora
+    #               sqlnet.ora
+    #               oracle_env.sh
+    #               /rdbms
+    #                    /mesg
+    #                        ulus.msb
+    #                        ulus.msg
+
+We need to make symlinks from example mapping: 
+
+    # <project-folder>/<python-package-folder>/venv/bin/file : <project-folder>/<python-package-folder>/bin
+
+To create symlinks use these commands: (three symlinks for ndml-sonus and one for loader-generic)
+        
+    $ ln -s /ndml-sonus/ndml_sonus/venv/bin/getdata_sonus_ssh_VM.py /ndml-sonus/ndml_sonus/bin
+    $ ln -s /ndml-sonus/ndml_sonus/venv/bin/parser_sonus.py /ndml-sonus/ndml_sonus/bin
+    $ ln -s /ndml-sonus/ndml_sonus/venv/bin/psx_archive_parser.py /ndml-sonus/ndml_sonus/bin
+    $ ln -s /ndml-sonus/loader_generic/venv/bin/loader.py /ndml-sonus/loader_generic/bin
+    # we need to make all the symlinks provided in Project Structure!
+
+Then you need to update path's in every .sh file since they run the main application. Current paths are for example.
+
+Look here: https://github.com/w-e-ll/ndml-sonus/README.md there is README.md file with the logic to get, parse, and load files.
+
+All the files that are not in the Project Structure, but you still have them in the downloaded unarchived folder, could be deleted.
+
+To run different parts (getter, parser, loader) you should use the following commands. Change paths to yours:
+
+GETTER: 
+
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/getdata_sonus_ssh_VM.py --config /ndml-sonus/ndml_sonus/etc/test_getter_uat.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/getdata_sonus_ssh_VM.py --config /ndml-sonus/ndml_sonus/etc/test_getter_prod.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/getdata_sonus_ssh_VM.py --config /ndml-sonus/ndml_sonus/etc/sonus-production-VM-paille.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/getdata_sonus_ssh_VM.py --config /ndml-sonus/ndml_sonus/etc/sonus-production-VM-psx.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+
+PARSER:
+
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/psx_archive_parser.py --config /ndml-sonus/ndml_sonus/etc/test_parser_uat.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/psx_archive_parser.py --config /ndml-sonus/ndml_sonus/etc/test_parser_prod.conf >> /ndml-sonus/ndml_sonus/log/getdata_sonus_psx.out 2>&1
+
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/parser_sonus.py --config /ndml-sonus/ndml_sonus/etc/sonus-production-VM-psx.conf >> parsedata_sonus_lab-psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/parser_sonus.py --config /ndml-sonus/ndml_sonus/etc/sonus-production-VM-marais.conf >> parsedata_sonus_lab-psx.out 2>&1
+    $ /ndml-sonus/ndml_sonus/venv/bin/python /ndml-sonus/ndml_sonus/bin/parser_sonus.py --config /ndml-sonus/ndml_sonus/etc/sonus-production-VM-paille.conf >> parsedata_sonus_lab-psx.out 2>&1
+
+LOADER:
+
+    $ /ndml-sonus/loader-generic/bin/python /ndml-sonus/loader-generic/bin/loader.py -c /ndml-sonus/loader_generic/etc/loader_generic.bbbo01u.conf >> /ndml-sonus/loader_generic/log/loader_generic.stdout 2> /ndml-sonus/loader_generic/log/loader_generic.stderr
