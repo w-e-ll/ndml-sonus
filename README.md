@@ -189,7 +189,7 @@ To create symlinks use these commands: (three symlinks for ndml-sonus and one fo
 
 Then you need to update path's in every .sh file since they run the main application. Current paths are for example.
 
-Look here: https://github.com/w-e-ll/ndml-sonus/README.md there is README.md file with the logic to get, parse, and load files.
+Look here:[ https://github.com/w-e-ll/ndml-sonus/README.md](https://github.com/w-e-ll/ndml-sonus/blob/main/README.md) there is README.md file with the logic to get, parse, and load files.
 
 All the files that are not in the Project Structure, but you still have them in the downloaded unarchived folder, could be deleted.
 
